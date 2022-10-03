@@ -1,25 +1,21 @@
+from pynput.keyboard import Key, KeyCode, Listener
 from playsound import playsound
-from pygame import mixer
-import pygame
 import tkinter as tk
-import keyboard
-import sdl2
 import threading
 import time
-import subprocess
 import json
+import subprocess
 import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+from pygame import mixer
+import sdl2
 
 
 path_sound = "soundboard\\sound\\"
 path_json = 'soundboard\\setting.json'
 
-
 global all_sounds_with_mp3
 all_sounds_with_mp3 = os.listdir("soundboard\\sound\\")
-
-
-print("\n", ('-' * 50), "\n")
 
 
 def get_device(type_device):
@@ -27,8 +23,7 @@ def get_device(type_device):
     mixer.init()
     for i in range(sdl2.audio.SDL_GetNumAudioDevices(type_device)):
         device.append(
-            str(sdl2.audio.SDL_GetAudioDeviceName(i, type_device))[2:-1]
-        )
+            str(sdl2.audio.SDL_GetAudioDeviceName(i, type_device))[2:-1])
     mixer.quit()
     return device
 
@@ -63,16 +58,16 @@ def get_volume_select():
     _reload()
 
 
-def get_json():
+def get_json(path):
     data = []
-    with open(path_json, 'r') as json_r:
+    with open(path, 'r') as json_r:
         data = json.load(json_r)
         json_r.close()
     return data
 
 
 def _reload():
-    _reload.data_json = get_json()
+    _reload.data_json = get_json(path_json)
     #print('data loaded',_reload.data_json)
     _reload_mixer()
 
@@ -83,6 +78,7 @@ def _reload_mixer():
     finally:
         try:
             mixer.init(devicename=str(_reload.data_json["output device"]))
+            mixer.music.set_volume(_reload.data_json["volume"])
         except:
             print("  _output missing_ \n")
 
@@ -97,12 +93,18 @@ def playx(name_song):
 
     try:
         mixer.music.load(path_sound + name_song + ".mp3")
-        mixer.music.set_volume(_reload.data_json["volume"])
         mixer.music.play()
-        print("  _play " + name_song + ".mp3")
-        # time.sleep(.05)
-    except FileNotFoundError:
-        print("  _ " + name_song + ".mp3\tnot found _ ")
+        print("  _ play " + name_song + ".mp3 ♪")
+    except:
+        print("  _ {:<20} not found _ ".format(str(name_song) + ".mp3"))
+
+
+def error_():
+    raise TypeError("  _stop it!_ ")
+
+
+def nothing():
+    print('nothing')
 
 
 def UI_window():
@@ -176,80 +178,70 @@ def UI_window():
     pud.mainloop()
 
 
-def keyboard_match():
-    while True:
-        match keyboard.read_key():
-            case '1':
-                playx(_reload.data_json["_key"]['1'])
-            case '2':
-                playx(_reload.data_json["_key"]['2'])
-            case '3':
-                playx(_reload.data_json["_key"]['3'])
-            case '4':
-                playx(_reload.data_json["_key"]['4'])
-            case '5':
-                playx(_reload.data_json["_key"]['5'])
-            case '6':
-                playx(_reload.data_json["_key"]['6'])
-            case '7':
-                playx(_reload.data_json["_key"]['7'])
-            case '8':
-                playx(_reload.data_json["_key"]['8'])
-            case '9':
-                playx(_reload.data_json["_key"]['9'])
-            case '0':
-                playx(_reload.data_json["_key"]['0'])
-            case _:
-                pass
+list_pressed_key = []
+NUMPAD0 = KeyCode(0x60)
+NUMPAD1 = KeyCode(0x61)
+NUMPAD2 = KeyCode(0x62)
+NUMPAD3 = KeyCode(0x63)
+NUMPAD4 = KeyCode(0x64)
+NUMPAD5 = KeyCode(0x65)
+NUMPAD6 = KeyCode(0x66)
+NUMPAD7 = KeyCode(0x67)
+NUMPAD8 = KeyCode(0x68)
+NUMPAD9 = KeyCode(0x69)
+
+_HOTKEYS = {
+    frozenset([Key.alt_l, NUMPAD0]): lambda: playx("pew"),
+    frozenset([Key.alt_l, NUMPAD1]): lambda: playx("pew"),
+    frozenset([Key.alt_l, NUMPAD2]): lambda: playx("pew"),
+    frozenset([Key.alt_l, NUMPAD3]): lambda: playx("pew"),
+    frozenset([Key.alt_l, NUMPAD4]): lambda: playx("pew"),
+    frozenset([Key.alt_l, NUMPAD5]): lambda: playx("pew"),
+    frozenset([Key.alt_l, NUMPAD6]): lambda: playx("pew"),
+    frozenset([Key.alt_l, NUMPAD7]): lambda: playx("pew"),
+    frozenset([Key.alt_l, NUMPAD8]): lambda: playx("pew"),
+    frozenset([Key.alt_l, NUMPAD9]): lambda: playx("pew"),
+}
 
 
-def keyboard_ifelse():
-    while True:
-        # print(keyboard.read_key())
-        if keyboard.read_key() in _reload.data_json['_key'].keys():
-            playx(_reload.data_json["_key"][keyboard.read_key()])
+def get_vk(key):
+    return key.vk if hasattr(key, 'vk') else key.value.vk
 
 
-def error_():
-    raise TypeError("  _stop it!_ ")
+def is_combination_pressed(combination):
+    return all([get_vk(key) in list_pressed_key for key in combination])
 
 
-def nothing():
-    print('nothing')
+def func_on_press(key):
+    vk = get_vk(key)
+    if vk not in list_pressed_key:
+        list_pressed_key.append(vk)
+    for combination in _HOTKEYS:
+        if is_combination_pressed(combination):
+            _HOTKEYS[combination]()
+            del list_pressed_key[1:]
+
+
+def func_on_release(key):
+    vk = get_vk(key)
+    if vk in list_pressed_key:
+        list_pressed_key.remove(vk)
+
+
+def _Hotkey():
+    with Listener(on_press=func_on_press, on_release=func_on_release) as listener:
+        listener.join()
 
 
 def main():
     _reload()
-    subprocess.Popen('rundll32.exe Shell32.dll,Control_RunDLL Mmsys.cpl,,1')
+    thread_Window = threading.Thread(target=UI_window).start()
+    thread_HotKey = threading.Thread(target=_Hotkey).start()
 
-    global typex_
-    typex_ = ''
 
-    while True:
-        typex_ = input("\t- chose type : ")
-        if (typex_ != '0' and typex_ != '1' and typex_ != '2' and typex_ != '3'):
-            print("  _ not found _ ")
-        else:
-            break
-
-    match typex_:
-        case '1':
-            while True:
-                soundx = input(" -; ")
-                playx(soundx)
-        case '2':
-            keyboard_match()
-        case '3':
-            UI_window()
-        case '0':
-            thread_UIWindow = threading.Thread(target=UI_window).start()
-            thread_Keyboard = threading.Thread(target=keyboard_ifelse).start()
-        case _:
-            pass
-
+print("\n", ('-' * 50), "\n")
 
 if __name__ == '__main__':
     main()
-
 
 print("\n", ('-' * 50), "\n")
