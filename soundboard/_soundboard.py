@@ -68,7 +68,7 @@ def get_json(path):
 
 def _reload():
     _reload.data_json = get_json(path_json)
-    #print('data loaded',_reload.data_json)
+    print('data loaded',_reload.data_json)
     _reload_mixer()
 
 
@@ -80,15 +80,13 @@ def _reload_mixer():
             mixer.init(devicename=str(_reload.data_json["output device"]))
             mixer.music.set_volume(_reload.data_json["volume"])
         except:
-            print("  _output missing_ \n")
+            print("  _something error_ \n")
 
 
 def playx(name_song):
     try:
         mixer.music.unload()
     except:
-        pass
-    finally:
         _reload_mixer()
 
     try:
@@ -103,7 +101,7 @@ def error_():
     raise TypeError("  _stop it!_ ")
 
 
-def nothing():
+def nothing_():
     print('nothing')
 
 
@@ -130,9 +128,7 @@ def UI_window():
             command=get_device_select
         )
 
-    menu_input.add_cascade(
-        label="output device", menu=menu_device, command=nothing
-    )
+    menu_input.add_cascade(label="output device", menu=menu_device, command=nothing_)
     menubar.add_cascade(label="input", menu=menu_input)
 
     volumemenu = tk.Menu(menubar, tearoff=0)
@@ -149,15 +145,12 @@ def UI_window():
             command=get_volume_select
         )
 
-    volumemenu.add_cascade(
-        label="sound level", menu=pikvolumemenu, command=nothing
-    )
+    volumemenu.add_cascade(label="sound level", menu=pikvolumemenu, command=nothing_)
     menubar.add_cascade(label="volume", menu=volumemenu)
 
-    helpmenu = tk.Menu(menubar, tearoff=0)
-    helpmenu.add_command(label="Help Index", command=nothing)
-    helpmenu.add_command(label="About...", command=nothing)
-    menubar.add_cascade(label="Help", menu=helpmenu)
+    menu_quit = tk.Menu(menubar, tearoff=0)
+    menu_quit.add_command(label="quit...", command=pud.destroy)
+    menubar.add_cascade(label="Help", menu=menu_quit)
 
     i_row = 0
     i_colum = 0
@@ -191,16 +184,16 @@ NUMPAD8 = KeyCode(0x68)
 NUMPAD9 = KeyCode(0x69)
 
 _HOTKEYS = {
-    frozenset([Key.alt_l, NUMPAD0]): lambda: playx("pew"),
-    frozenset([Key.alt_l, NUMPAD1]): lambda: playx("pew"),
-    frozenset([Key.alt_l, NUMPAD2]): lambda: playx("pew"),
-    frozenset([Key.alt_l, NUMPAD3]): lambda: playx("pew"),
-    frozenset([Key.alt_l, NUMPAD4]): lambda: playx("pew"),
-    frozenset([Key.alt_l, NUMPAD5]): lambda: playx("pew"),
-    frozenset([Key.alt_l, NUMPAD6]): lambda: playx("pew"),
-    frozenset([Key.alt_l, NUMPAD7]): lambda: playx("pew"),
-    frozenset([Key.alt_l, NUMPAD8]): lambda: playx("pew"),
-    frozenset([Key.alt_l, NUMPAD9]): lambda: playx("pew"),
+    frozenset([Key.alt_l, NUMPAD0]): lambda: playx(_reload.data_json['_key']['0']),
+    frozenset([Key.alt_l, NUMPAD1]): lambda: playx(_reload.data_json['_key']['1']),
+    frozenset([Key.alt_l, NUMPAD2]): lambda: playx(_reload.data_json['_key']['2']),
+    frozenset([Key.alt_l, NUMPAD3]): lambda: playx(_reload.data_json['_key']['3']),
+    frozenset([Key.alt_l, NUMPAD4]): lambda: playx(_reload.data_json['_key']['4']),
+    frozenset([Key.alt_l, NUMPAD5]): lambda: playx(_reload.data_json['_key']['5']),
+    frozenset([Key.alt_l, NUMPAD6]): lambda: playx(_reload.data_json['_key']['6']),
+    frozenset([Key.alt_l, NUMPAD7]): lambda: playx(_reload.data_json['_key']['7']),
+    frozenset([Key.alt_l, NUMPAD8]): lambda: playx(_reload.data_json['_key']['8']),
+    frozenset([Key.alt_l, NUMPAD9]): lambda: playx(_reload.data_json['_key']['9']),
 }
 
 
@@ -239,9 +232,5 @@ def main():
     thread_HotKey = threading.Thread(target=_Hotkey).start()
 
 
-print("\n", ('-' * 50), "\n")
-
 if __name__ == '__main__':
     main()
-
-print("\n", ('-' * 50), "\n")
